@@ -159,3 +159,81 @@ class IndexPage(UserPage):
 
     def assert_step(self, text):
         self._assert_section_heading("steps", text, heading_class="step__heading", timeout=10)
+
+    def scroll_to_qa(self):
+        self._scroll_to(".question")
+        time.sleep(1)
+
+    def assert_qa_title(self):
+        self._assert_section_heading("question", "Вопрос - ответ", heading_class="title-h2", timeout=10)
+
+    def _qa_item_xpath(self, index):
+        return f"(//*[contains(@class,'question')]//*[contains(@class,'accordion-item')])[{index}]"
+
+    def assert_qa_question(self, index, text):
+        self.assert_visible_text(f"{self._qa_item_xpath(index)}//h3[{self.text_predicate(text)}]", timeout=10)
+
+    def click_qa_question(self, index):
+        header = WebDriverWait(self.driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, f"{self._qa_item_xpath(index)}//*[contains(@class,'accordion-header')]")
+            )
+        )
+        self.driver.execute_script("arguments[0].click();", header)
+        time.sleep(1)
+
+    def assert_qa_answer_visible(self, index):
+        self.assert_visible_text(
+            f"{self._qa_item_xpath(index)}//*[contains(@class,'accordion-content')]", timeout=10
+        )
+
+    def assert_qa_answer_hidden(self, index):
+        self.assert_hidden_text(
+            f"{self._qa_item_xpath(index)}//*[contains(@class,'accordion-content')]", timeout=10
+        )
+
+    def scroll_to_calendar(self):
+        self._scroll_to(".calendar-section")
+
+    def assert_calendar_title(self):
+        self.assert_visible_text(
+            f"//*[contains(@class,'calendar-title')]//h2[{self.text_predicate('Календарь абитуриента')}]",
+            timeout=10,
+        )
+
+    def assert_calendar_tab_visible(self, tab_class):
+        self.assert_visible_text(
+            f"//*[contains(@class,'tab-pane') and contains(@class,'{tab_class}')]", timeout=10
+        )
+
+    def click_calendar_tab(self, tab_class):
+        self._click_swiper_btn(f"#page-tab .nav-link.{tab_class}", pause=1)
+
+    def scroll_to_infrastructure(self):
+        self._scroll_to(".social-section")
+
+    def assert_video_visible(self):
+        self.assert_visible_text("//video[contains(@class,'video')]", timeout=10)
+
+    def assert_infrastructure_title(self):
+        self._assert_section_heading(
+            "social-section", "Современная инфраструктура для жизни и учебы", timeout=10
+        )
+
+    def assert_infrastructure_slide(self, text):
+        self._assert_active_slide("social-section", "socials-slider__title", text, timeout=10)
+
+    def click_next_infrastructure_slide(self):
+        self._click_swiper_btn(".home-social-button__next", pause=1)
+
+    def click_prev_infrastructure_slide(self):
+        self._click_swiper_btn(".home-social-button__prev", pause=1)
+
+    def scroll_to_admissions_committee(self):
+        self._scroll_to("footer.footer")
+
+    def assert_admissions_committee_title(self):
+        self.assert_visible_text(
+            f"//footer[contains(@class,'footer')]//h2[{self.text_predicate('Приемная комиссия')}]",
+            timeout=10,
+        )

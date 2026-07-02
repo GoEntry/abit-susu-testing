@@ -25,6 +25,11 @@ class Page():
             EC.visibility_of_element_located((By.XPATH, xpath))
         )
 
+    def assert_hidden_text(self, xpath: str, timeout: int = 5):
+        WebDriverWait(self.driver, timeout).until(
+            EC.invisibility_of_element_located((By.XPATH, xpath))
+        )
+
     def assert_tag_text(self, tag: str, text: str, timeout: int = 1):
         self.assert_visible_text(f"//{tag}[{self.text_predicate(text)}]", timeout)
 

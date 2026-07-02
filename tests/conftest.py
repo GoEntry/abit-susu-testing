@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.driver_cache import DriverCacheManager
 import pytest
 from classes.config import Config
 
@@ -15,7 +16,7 @@ def driver():
         'intl.accept_languages': 'ru',
     })
 
-    service = ChromeService(ChromeDriverManager().install())
+    service = ChromeService(ChromeDriverManager(cache_manager=DriverCacheManager(valid_range=30)).install())
 
     driver = webdriver.Chrome(options, service)
 
