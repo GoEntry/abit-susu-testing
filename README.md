@@ -62,7 +62,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-В `.env` задаётся `SITE_URL` (адрес тестируемого сайта, по умолчанию https://abit.susu.ru), а также параметры браузера (`HEADLESS`, `WINDOW_SIZE`)
+В `.env` задаётся `SITE_URL` (адрес тестируемого сайта, по умолчанию https://abit.susu.ru), параметры браузера (`HEADLESS`, `WINDOW_SIZE`), а также логин и пароль администратора WordPress (`WP_ADMIN_LOGIN`, `WP_ADMIN_PASSWORD`) для тестов wp-admin
 
 ## Запуск
 

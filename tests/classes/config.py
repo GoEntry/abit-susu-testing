@@ -8,3 +8,11 @@ class Config:
     @staticmethod
     def window_size() -> list:
         return os.environ.get("WINDOW_SIZE").split(",")
+
+    @staticmethod
+    def wp_admin_login() -> str:
+        return os.environ.get("WP_ADMIN_LOGIN")
+
+    @staticmethod
+    def wp_admin_password() -> str:
+        return os.environ.get("WP_ADMIN_PASSWORD")
