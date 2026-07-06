@@ -1,6 +1,9 @@
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from components.fields.select2 import Select2Field
 from pages.base.admin.page import AdminPage
 
 class AddEducationProgramPage(AdminPage):
@@ -9,102 +12,61 @@ class AddEducationProgramPage(AdminPage):
 
     def fill_program(self, program: dict):
         self.driver.find_element(By.ID, "title").send_keys(program["title"])
+        Select2Field(self.driver, "extra[edu-area]", program["edu_area"]).handle()
+        Select2Field(self.driver, "extra[edu-form]", program["edu_form"]).handle()
+        Select2Field(self.driver, "extra[branches]", program["branch"]).handle()
+        Select2Field(self.driver, "extra[division]", program["division"]).handle()
+        Select2Field(self.driver, "extra[subjects-ege][]", program["exam_subjects"]).handle()
+        Select2Field(self.driver, "extra[funded-places-fields][]", program["funded_place_types"]).handle()
+        Select2Field(self.driver, "extra[partners][]", program["partners"]).handle()
+        Select2Field(self.driver, "extra[profiles][]", program["profiles"]).handle()
+        Select2Field(self.driver, "extra[edu-professions][]", program["professions"]).handle()
+        Select2Field(self.driver, "extra[contacts-tax][]", program["contacts"]).handle()
 
-        self._set_select_by_text("extra[edu-area]", program["edu_area"])
-        self._set_select_by_text("extra[edu-cost]", program["edu_cost"])
-        self._set_multiselect_by_texts("extra[subjects-ege][]", program["exam_subjects"])
-        self._set_multiselect_by_texts("extra[funded-places-fields][]", program["funded_place_types"])
-        self._set_multiselect_by_texts("extra[partners][]", program["partners"])
-        self._set_multiselect_by_texts("extra[profiles][]", program["profiles"])
-        self._set_multiselect_by_texts("extra[edu-professions][]", program["professions"])
-        self._set_multiselect_by_texts("extra[contacts-tax][]", program["contacts"])
-
-        self._set_select("extra[edu-form]", program["edu_form_value"])
-        self._set_select("extra[branches]", program["branch_value"])
-        self._set_select("extra[division]", program["division_value"])
-        self._set_select("extra[language]", program["language_value"])
-        self._set_select("extra[view-front-page]", program["front_page_position_value"])
+        Select(self.driver.find_element(By.NAME, "extra[edu-cost]")).select_by_visible_text(program["edu_cost"])
+        Select(self.driver.find_element(By.NAME, "extra[language]")).select_by_value(program["language_value"])
+        Select(self.driver.find_element(By.NAME, "extra[view-front-page]")).select_by_value(
+            program["front_page_position_value"]
+        )
 
         self.driver.find_element(By.ID, "meta-box-edu-time").send_keys(program["duration"])
         self.driver.find_element(By.ID, "meta-box-funded-places").send_keys(program["funded_places_total"])
         self.driver.find_element(By.ID, "meta-box-paid-places").send_keys(program["paid_places"])
         self.driver.find_element(By.ID, "meta-box-passing_score_budget").send_keys(program["passing_score_budget"])
         self.driver.find_element(By.ID, "meta-box-passing_score_contract").send_keys(program["passing_score_contract"])
-        self.driver.find_element(By.ID, "meta-box-profile").send_keys(program["profiles"][0])
 
-        self.driver.execute_script(
-            "tinymce.get('field-consultations').setContent(arguments[0]);", program["consultations"]
-        )
+        self._fill_consultations(program["consultations"])
 
     def fill_exam_details(self, exam_details: dict):
-        # exam_details: {"Название предмета": ("1" - обязательный/"0" - по выбору, "порядок вывода")}.
-        # Строки таблицы появляются только после первой публикации (рендерятся
-        # сервером по уже сохранённым extra[subjects-ege][]), поэтому это
-        # отдельный шаг, а не часть fill_program().
-        script = """
-            const [subject, examType, order] = arguments;
-            const row = [...document.querySelectorAll('.subjects-ege-fields table tr')]
-                .find(r => r.querySelector('td label')?.textContent.trim() === subject);
-            const select = row.querySelector('select');
-            const input = row.querySelector('input[type="text"]');
-            select.value = examType;
-            input.value = order;
-            jQuery(select).trigger('change');
-        """
         for subject, (exam_type, order) in exam_details.items():
-            self.driver.execute_script(script, subject, exam_type, order)
+            row = self.driver.find_element(By.XPATH, f"//tr[td/label[{self.text_predicate(subject)}]]")
+            Select(row.find_element(By.TAG_NAME, "select")).select_by_value(exam_type)
+            row.find_element(By.CSS_SELECTOR, "input[type='text']").send_keys(order)
 
     def fill_funded_place_counts(self, counts: dict):
-        # counts: {"Название типа мест": "количество"}. Как и с испытаниями,
-        # поля появляются только после первой публикации.
-        script = """
-            const [label, count] = arguments;
-            const container = document.querySelector('.funded-place-fields-input');
-            const labelEl = [...container.querySelectorAll('label')].find(l => l.textContent.trim() === label);
-            labelEl.nextElementSibling.value = count;
-        """
         for label, count in counts.items():
-            self.driver.execute_script(script, label, count)
+            xpath = (
+                "//div[contains(@class, 'funded-place-fields-input')]"
+                f"//label[{self.text_predicate(label)}]/following-sibling::input[1]"
+            )
+            self.driver.find_element(By.XPATH, xpath).send_keys(count)
 
     def publish(self, timeout: int = 15):
-        # Публикация/обновление перезагружает страницу (создание — с редиректом
-        # на экран редактирования, обновление — той же страницей), поэтому
-        # ждём протухания старой кнопки как признака завершённой навигации —
-        # иначе следующий шаг (например, fill_exam_details) может выполниться
-        # ещё до того, как отрендерятся серверные репитеры на новой странице.
         button = self.driver.find_element(By.ID, "publish")
         button.click()
         WebDriverWait(self.driver, timeout).until(EC.staleness_of(button))
 
-    def _set_select(self, name: str, value):
-        script = """
-            const select = document.querySelector(`select[name="${arguments[0]}"]`);
-            select.value = arguments[1];
-            jQuery(select).trigger('change');
-        """
-        self.driver.execute_script(script, name, value)
-
-    def _set_select_by_text(self, name: str, text: str):
-        # У терминов таксономий (Направление, Стоимость и т.п.) value — это id
-        # термина, который не детерминирован между пересозданиями после
-        # сброса БД, поэтому выбираем по видимому тексту.
-        script = """
-            const select = document.querySelector(`select[name="${arguments[0]}"]`);
-            const option = [...select.options].find(o => o.text === arguments[1]);
-            select.value = option.value;
-            jQuery(select).trigger('change');
-        """
-        self.driver.execute_script(script, name, text)
-
-    def _set_multiselect_by_texts(self, name: str, texts: list):
-        # Поля направления/партнёров/профилей и т.п. используют select2 поверх
-        # обычного <select>: реальный клик по виджету открывает динамически
-        # генерируемый выпадающий список вне DOM select2, поэтому значения
-        # выставляются напрямую через jQuery, как и клики по свайперам в IndexPage.
-        script = """
-            const select = document.querySelector(`select[name="${arguments[0]}"]`);
-            const texts = arguments[1];
-            [...select.options].forEach(o => o.selected = texts.includes(o.text));
-            jQuery(select).trigger('change');
-        """
-        self.driver.execute_script(script, name, texts)
+    def _fill_consultations(self, html: str, timeout: int = 10):
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: driver.execute_script(
+                    "return typeof tinymce !== 'undefined' && tinymce.get('field-consultations') !== null;"
+                )
+            )
+            self.driver.execute_script(
+                "tinymce.get('field-consultations').setContent(arguments[0]);", html
+            )
+        except TimeoutException:
+            self.driver.execute_script(
+                "document.getElementById('field-consultations').value = arguments[0];", html
+            )

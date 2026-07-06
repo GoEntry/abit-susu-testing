@@ -1,3 +1,4 @@
+from pathlib import Path
 from classes.config import Config
 from pages.wp_login.WpLoginPage import WpLoginPage
 from pages.test.ResetDbPage import ResetDbPage
@@ -6,6 +7,12 @@ from pages.wp_admin.AddEducationProgramPage import AddEducationProgramPage
 from pages.wp_admin.TermPage import TermPage
 
 EDU_AREA_NAME = "09.03.01 Информатика и вычислительная техника"
+
+# Форма добавления термина показывает поле картинки (стандартный медиа-
+# загрузчик WordPress) только у этих таксономий — у остальных (Направление,
+# Стоимость, Профили, Вступительные испытания) такого поля нет вовсе.
+TAXONOMIES_WITH_IMAGE = {"partners", "professions", "contacts"}
+LOGO_IMAGE_PATH = str(Path(__file__).parent / "fixtures" / "logo.png")
 
 # Термины стоимости обучения должны быть просто числом (без пробелов и "₽") —
 # фронтенд сам форматирует их с разделителями разрядов и знаком валюты;
@@ -79,9 +86,9 @@ PROGRAMS = [
         "profiles": ["Разработка программного обеспечения"],
         "professions": ["Программист", "Аналитик данных"],
         "contacts": ["Приёмная комиссия ЮУрГУ"],
-        "edu_form_value": "0",  # очная
-        "branch_value": "0",  # Челябинск
-        "division_value": "3",  # Высшая школа электроники и компьютерных наук
+        "edu_form": "очная",
+        "branch": "Челябинск",
+        "division": "Высшая школа электроники и компьютерных наук",
         "language_value": "0",  # Русский
         "front_page_position_value": "0",  # 1
         "duration": "4 года",
@@ -107,9 +114,9 @@ PROGRAMS = [
         "profiles": ["Информационные системы предприятия"],
         "professions": ["Аналитик данных"],
         "contacts": ["Приёмная комиссия ЮУрГУ"],
-        "edu_form_value": "0",
-        "branch_value": "0",
-        "division_value": "3",
+        "edu_form": "очная",
+        "branch": "Челябинск",
+        "division": "Высшая школа электроники и компьютерных наук",
         "language_value": "0",
         "front_page_position_value": "1",  # 2
         "duration": "4 года",
@@ -135,9 +142,9 @@ PROGRAMS = [
         "profiles": ["Экономика предприятий и организаций"],
         "professions": ["Экономист"],
         "contacts": ["Приёмная комиссия ЮУрГУ"],
-        "edu_form_value": "1",  # заочная
-        "branch_value": "0",
-        "division_value": "2",  # Высшая школа экономики и управления
+        "edu_form": "заочная",
+        "branch": "Челябинск",
+        "division": "Высшая школа экономики и управления",
         "language_value": "0",
         "front_page_position_value": "2",  # 3
         "duration": "5 лет",
@@ -163,9 +170,9 @@ PROGRAMS = [
         "profiles": ["Автоматизация производственных процессов"],
         "professions": ["Инженер-технолог"],
         "contacts": ["Приёмная комиссия ЮУрГУ"],
-        "edu_form_value": "0",
-        "branch_value": "2",  # Миасс
-        "division_value": "8",  # Политехнический институт
+        "edu_form": "очная",
+        "branch": "Миасс",
+        "division": "Политехнический институт",
         "language_value": "0",
         "front_page_position_value": "3",  # 4
         "duration": "4 года",
@@ -191,9 +198,9 @@ PROGRAMS = [
         "profiles": ["Промышленное и гражданское строительство"],
         "professions": ["Инженер-строитель"],
         "contacts": ["Приёмная комиссия ЮУрГУ"],
-        "edu_form_value": "0",
-        "branch_value": "0",
-        "division_value": "0",  # Архитектурно-строительный институт
+        "edu_form": "очная",
+        "branch": "Челябинск",
+        "division": "Архитектурно-строительный институт",
         "language_value": "0",
         "front_page_position_value": "4",  # 5
         "duration": "4 года",
@@ -219,9 +226,9 @@ PROGRAMS = [
         "profiles": ["Гражданское право"],
         "professions": ["Юрист"],
         "contacts": ["Приёмная комиссия ЮУрГУ"],
-        "edu_form_value": "2",  # очно-заочная
-        "branch_value": "0",
-        "division_value": "9",  # Юридический институт
+        "edu_form": "очно-заочная",
+        "branch": "Челябинск",
+        "division": "Юридический институт",
         "language_value": "0",
         "front_page_position_value": "5",  # 6
         "duration": "4 года",
@@ -262,18 +269,15 @@ def test_fill_education_programs(driver):
     term_page = TermPage(driver)
     for taxonomy, names in TAXONOMY_TERMS.items():
         term_page.open(taxonomy)
+        image_path = LOGO_IMAGE_PATH if taxonomy in TAXONOMIES_WITH_IMAGE else None
         for name in names:
-            term_page.add_term(name)
+            term_page.add_term(name, image_path=image_path)
 
     add_program_page = AddEducationProgramPage(driver)
     for program in PROGRAMS:
         add_program_page.open()
         add_program_page.fill_program(program)
         add_program_page.publish()
-
-        # Таблицы "Вступительные испытания по типам" и "Бюджетные места"
-        # рендерятся сервером только после первой публикации, поэтому детали
-        # заполняются вторым проходом и требуют повторного сохранения.
         add_program_page.fill_exam_details(program["exam_details"])
         add_program_page.fill_funded_place_counts(program["funded_place_counts"])
         add_program_page.publish()
