@@ -5,6 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from components.fields.select2 import Select2Field
 from pages.base.admin.page import AdminPage
+from components.fields.tinymce import TinymceField
+from pages.index import IndexPage
 
 class AddEducationProgramPage(AdminPage):
     def open(self):
@@ -97,19 +99,27 @@ class AddEducationProgramPage(AdminPage):
                 By.XPATH,
                 f"//details[contains(@class, 'profile-accordion')][summary[{self.text_predicate(profile_name)}]]",
             )
-            edu_program_field, competencies_field = block.find_elements(By.TAG_NAME, "textarea")
-            self._fill_textarea(edu_program_field, edu_program_text)
-            self._fill_textarea(competencies_field, competencies_text)
+
+            summary = block.find_element(By.TAG_NAME, "summary")
+            summary.click()
+
+            # WebDriverWait(block, timeout).until(EC.staleness_of(button))
+            # WebDriverWait(block, timeout).until(EC.staleness_of(button))
+            edu_program_field, competencies_field = block.find_elements(By.TAG_NAME, "iframe")
+            print(edu_program_field.get_attribute('id'))
+            index_page = IndexPage(self.driver)
+            index_page._scroll_to(f"#{edu_program_field.get_attribute('id')}")
+            TinymceField(self.driver, edu_program_field.get_attribute('id'), edu_program_text).handle()
+            TinymceField(self.driver, competencies_field.get_attribute('id'), competencies_text).handle()
+            # self._fill_textarea(edu_program_field, edu_program_text)
+            # self._fill_textarea(competencies_field, competencies_text)
 
     def _fill_textarea(self, field, text: str):
         # Тот же баг сайта, что и с "Консультациями" (сторонний скрипт
         # CodeMirror иногда ломает инициализацию редакторов на странице) —
         # изредка эта textarea на мгновение недоступна для send_keys сразу
         # после навигации. В этом случае подставляем значение прямо в DOM.
-        try:
-            field.send_keys(text)
-        except ElementNotInteractableException:
-            self.driver.execute_script("arguments[0].value = arguments[1];", field, text)
+        field.send_keys(text)
 
     def publish(self, timeout: int = 15):
         button = self.driver.find_element(By.ID, "publish")
