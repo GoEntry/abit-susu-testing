@@ -23,7 +23,10 @@ class TermPage(AdminPage):
             # описание", Профессии — "Профессия после обучения"): по умолчанию
             # уже в режиме "Код" (обычная <textarea class="wp-editor-area">),
             # поэтому send_keys работает напрямую, без обращения к TinyMCE API.
-            self.driver.find_element(By.CSS_SELECTOR, ".wp-editor-area").send_keys(content)
+            # Ищем в контексте формы добавления термина, чтобы не переключаться
+            # между несколькими редакторами на странице.
+            form = self.driver.find_element(By.ID, "addtag")
+            form.find_element(By.CSS_SELECTOR, ".wp-editor-area").send_keys(content)
         if image_path:
             self._upload_image(image_path, timeout)
         self.driver.find_element(By.ID, "submit").click()
