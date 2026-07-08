@@ -2,10 +2,11 @@ import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from pages.base.admin.page import AdminPage
-
+from components.fields.tinymce import TinymceField
 class TermPage(AdminPage):
-    def open(self, taxonomy: str):
-        super().open(f"/wp-admin/edit-tags.php?taxonomy={taxonomy}&post_type=education-program")
+    taxonomy: str
+    def open(self):
+        super().open(f"/wp-admin/edit-tags.php?taxonomy={self.taxonomy}&post_type=education-program")
 
     def add_term(
         self,
@@ -25,8 +26,12 @@ class TermPage(AdminPage):
             # поэтому send_keys работает напрямую, без обращения к TinyMCE API.
             # Ищем в контексте формы добавления термина, чтобы не переключаться
             # между несколькими редакторами на странице.
-            form = self.driver.find_element(By.ID, "addtag")
-            form.find_element(By.CSS_SELECTOR, ".wp-editor-area").send_keys(content)
+            TinymceField(self.driver, f"{self.taxonomy}-content_ifr", content).handle()
+            # form = self.driver.find_element(By.ID, "addtag")
+            # form_descrition = WebDriverWait(form, 3).until(
+            #     EC.presence_of_element_located((By.CSS_SELECTOR,".wp-editor-area"))
+            # )
+            # form_descrition.send_keys(content)
         if image_path:
             self._upload_image(image_path, timeout)
         self.driver.find_element(By.ID, "submit").click()

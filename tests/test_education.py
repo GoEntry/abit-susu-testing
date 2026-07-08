@@ -356,7 +356,8 @@ def test_fill_education_programs(driver):
 
     term_page = TermPage(driver)
     for taxonomy, terms in TAXONOMY_TERMS.items():
-        term_page.open(taxonomy)
+        term_page.taxonomy = taxonomy
+        term_page.open()
         image_path = LOGO_IMAGE_PATH if taxonomy in TAXONOMIES_WITH_IMAGE else None
         for term in terms:
             if isinstance(term, dict):

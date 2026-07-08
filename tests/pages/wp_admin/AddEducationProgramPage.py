@@ -92,6 +92,7 @@ class AddEducationProgramPage(AdminPage):
         # его развёрнутым через CSS (display: block), поэтому кликать по
         # summary не нужно — оба textarea сразу доступны и уже в режиме "Код".
         for profile_name, (edu_program_text, competencies_text) in profile_details.items():
+            print(f"//details[contains(@class, 'profile-accordion')][summary[{self.text_predicate(profile_name)}]]")
             block = self.driver.find_element(
                 By.XPATH,
                 f"//details[contains(@class, 'profile-accordion')][summary[{self.text_predicate(profile_name)}]]",
