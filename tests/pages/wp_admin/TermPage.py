@@ -7,8 +7,23 @@ class TermPage(AdminPage):
     def open(self, taxonomy: str):
         super().open(f"/wp-admin/edit-tags.php?taxonomy={taxonomy}&post_type=education-program")
 
-    def add_term(self, name: str, image_path: str = None, timeout: int = 10):
+    def add_term(
+        self,
+        name: str,
+        image_path: str = None,
+        description: str = None,
+        content: str = None,
+        timeout: int = 10,
+    ):
         self.driver.find_element(By.ID, "tag-name").send_keys(name)
+        if description:
+            self.driver.find_element(By.ID, "tag-description").send_keys(description)
+        if content:
+            # Доп. rich-text поле у некоторых таксономий (Контакты — "Контакты
+            # описание", Профессии — "Профессия после обучения"): по умолчанию
+            # уже в режиме "Код" (обычная <textarea class="wp-editor-area">),
+            # поэтому send_keys работает напрямую, без обращения к TinyMCE API.
+            self.driver.find_element(By.CSS_SELECTOR, ".wp-editor-area").send_keys(content)
         if image_path:
             self._upload_image(image_path, timeout)
         self.driver.find_element(By.ID, "submit").click()
