@@ -83,24 +83,24 @@ class TermPage(AdminPage):
             ".upload_pdf_button",
             ".upload_file_button",
         ]
-        
+
         button = None
         for selector in button_selectors:
             buttons = self.driver.find_elements(By.CSS_SELECTOR, selector)
             if buttons:
                 button = buttons[0]
                 break
-        
+
         # Если не нашли по классу, ищем по тексту кнопки
         if not button:
             buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Загрузить файл')] | //input[@type='button' and contains(@value, 'Загрузить файл')]")
             if buttons:
                 button = buttons[0]
-        
+
         if not button:
             # Если кнопка не найдена, пропускаем загрузку
             return
-        
+
         button.click()
 
         modal = WebDriverWait(self.driver, timeout).until(
@@ -118,10 +118,6 @@ class TermPage(AdminPage):
         select_button.click()
 
         # Ждём заполнения #pdf_id на форме термина (если такое поле есть)
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.find_element(By.ID, "pdf_id").get_attribute("value")
-            )
-        except:
-            # Если поле #pdf_id не найдено, возможно используется другой ID
-            pass
+        WebDriverWait(self.driver, timeout).until(
+            lambda driver: driver.find_element(By.ID, "file_id").get_attribute("value")
+        )

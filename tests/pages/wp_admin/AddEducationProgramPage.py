@@ -70,10 +70,7 @@ class AddEducationProgramPage(AdminPage):
         if not select:
             return
         select_name = select[0].get_attribute("name")
-        try:
-            Select2Field(self.driver, select_name, texts).handle()
-        except:
-            pass
+        Select2Field(self.driver, select_name, texts).handle()
 
     def fill_spo_details(self, spo_details: dict):
         # СПО - вторая таблица (после ЕГЭ). Ищем все строки и для тех же предметов
@@ -89,11 +86,8 @@ class AddEducationProgramPage(AdminPage):
                 row = rows[0]
             else:
                 continue
-            try:
-                Select(row.find_element(By.TAG_NAME, "select")).select_by_value(exam_type)
-                row.find_element(By.CSS_SELECTOR, "input[type='text']").send_keys(order)
-            except:
-                pass
+        Select(row.find_element(By.TAG_NAME, "select")).select_by_value(exam_type)
+        row.find_element(By.CSS_SELECTOR, "input[type='text']").send_keys(order)
 
     def fill_funded_place_types(self, texts: list):
         Select2Field(self.driver, "extra[funded-places-fields][]", texts).handle()
@@ -164,16 +158,11 @@ class AddEducationProgramPage(AdminPage):
         WebDriverWait(self.driver, timeout).until(EC.staleness_of(button))
 
     def _fill_consultations(self, html: str, timeout: int = 10):
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.execute_script(
-                    "return typeof tinymce !== 'undefined' && tinymce.get('field-consultations') !== null;"
-                )
+        WebDriverWait(self.driver, timeout).until(
+        lambda driver: driver.execute_script(
+                "return typeof tinymce !== 'undefined' && tinymce.get('field-consultations') !== null;"
             )
-            self.driver.execute_script(
-                "tinymce.get('field-consultations').setContent(arguments[0]);", html
-            )
-        except TimeoutException:
-            self.driver.execute_script(
-                "document.getElementById('field-consultations').value = arguments[0];", html
-            )
+        )
+        self.driver.execute_script(
+            "tinymce.get('field-consultations').setContent(arguments[0]);", html
+        )
