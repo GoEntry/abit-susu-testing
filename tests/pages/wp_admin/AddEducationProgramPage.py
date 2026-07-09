@@ -1,4 +1,4 @@
-from selenium.common.exceptions import ElementNotInteractableException, TimeoutException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
@@ -36,6 +36,9 @@ class AddEducationProgramPage(AdminPage):
         self.fill_branch(program["branch"])
         self.fill_division(program["division"])
         self.fill_exam_subjects(program["exam_subjects"])
+        spo_subjects = program.get("spo_subjects", [])
+        if spo_subjects:
+            self.fill_spo_subjects(spo_subjects)
         self.fill_funded_place_types(program["funded_place_types"])
         self.fill_partners(program["partners"])
         self.fill_profiles(program["profiles"])
@@ -56,6 +59,41 @@ class AddEducationProgramPage(AdminPage):
 
     def fill_exam_subjects(self, texts: list):
         Select2Field(self.driver, "extra[subjects-ege][]", texts).handle()
+
+    def fill_spo_subjects(self, texts: list):
+        # Находим select по имени, содержащему spo (subjects_spo)
+        # Если поля нет или не работает - просто возвращаем
+        select = self.driver.find_elements(
+            By.XPATH,
+            "//select[contains(@name, 'spo')]"
+        )
+        if not select:
+            return
+        select_name = select[0].get_attribute("name")
+        try:
+            Select2Field(self.driver, select_name, texts).handle()
+        except:
+            pass
+
+    def fill_spo_details(self, spo_details: dict):
+        # СПО - вторая таблица (после ЕГЭ). Ищем все строки и для тех же предметов
+        # берём те, что находятся после первой группы (вторая таблица)
+        for subject, (exam_type, order) in spo_details.items():
+            rows = self.driver.find_elements(
+                By.XPATH, f"//tr[td/label[{self.text_predicate(subject)}]]"
+            )
+            # Берём вторую строку (если их несколько) - это СПО
+            if len(rows) >= 2:
+                row = rows[1]
+            elif len(rows) == 1:
+                row = rows[0]
+            else:
+                continue
+            try:
+                Select(row.find_element(By.TAG_NAME, "select")).select_by_value(exam_type)
+                row.find_element(By.CSS_SELECTOR, "input[type='text']").send_keys(order)
+            except:
+                pass
 
     def fill_funded_place_types(self, texts: list):
         Select2Field(self.driver, "extra[funded-places-fields][]", texts).handle()
