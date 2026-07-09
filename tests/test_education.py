@@ -12,7 +12,10 @@ EDU_AREA_NAME = "09.03.01 Информатика и вычислительная
 # загрузчик WordPress) только у этих таксономий — у остальных (Направление,
 # Стоимость, Профили, Вступительные испытания) такого поля нет вовсе.
 TAXONOMIES_WITH_IMAGE = {"partners", "professions", "contacts"}
+# У таксономии subjects_spo есть поле загрузки PDF-файла
+TAXONOMIES_WITH_PDF = {"subjects_spo"}
 LOGO_IMAGE_PATH = str(Path(__file__).parent / "fixtures" / "logo.png")
+SPO_PDF_PATH = str(Path(__file__).parent / "fixtures" / "spo_template.pdf")
 
 # Термины стоимости обучения должны быть просто числом (без пробелов и "₽") —
 # фронтенд сам форматирует их с разделителями разрядов и знаком валюты;
@@ -376,6 +379,7 @@ def test_fill_education_programs(driver):
         term_page.taxonomy = taxonomy
         term_page.open()
         image_path = LOGO_IMAGE_PATH if taxonomy in TAXONOMIES_WITH_IMAGE else None
+        pdf_path = SPO_PDF_PATH if taxonomy in TAXONOMIES_WITH_PDF else None
         for term in terms:
             if isinstance(term, dict):
                 name = term["name"]
@@ -383,7 +387,7 @@ def test_fill_education_programs(driver):
                 content = term.get("content")
             else:
                 name, description, content = term, None, None
-            term_page.add_term(name, image_path=image_path, description=description, content=content)
+            term_page.add_term(name, image_path=image_path, pdf_path=pdf_path, description=description, content=content)
 
     add_program_page = AddEducationProgramPage(driver)
     for program in PROGRAMS:

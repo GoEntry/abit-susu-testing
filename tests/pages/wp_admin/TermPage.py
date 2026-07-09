@@ -12,6 +12,7 @@ class TermPage(AdminPage):
         self,
         name: str,
         image_path: str = None,
+        pdf_path: str = None,
         description: str = None,
         content: str = None,
         timeout: int = 10,
@@ -34,6 +35,8 @@ class TermPage(AdminPage):
             # form_descrition.send_keys(content)
         if image_path:
             self._upload_image(image_path, timeout)
+        if pdf_path:
+            self._upload_pdf(pdf_path, timeout)
         self.driver.find_element(By.ID, "submit").click()
         self.assert_visible_text(f"//tr[{self.text_predicate(name)}]", timeout)
 
@@ -72,3 +75,53 @@ class TermPage(AdminPage):
         WebDriverWait(self.driver, timeout).until(
             lambda driver: driver.find_element(By.ID, "image_id").get_attribute("value")
         )
+
+    def _upload_pdf(self, path: str, timeout: int):
+        # У таксономии subjects_spo есть поле загрузки PDF через стандартный
+        # медиа-загрузчик WordPress. Кнопка называется "Загрузить файл".
+        button_selectors = [
+            ".upload_pdf_button",
+            ".upload_file_button",
+        ]
+        
+        button = None
+        for selector in button_selectors:
+            buttons = self.driver.find_elements(By.CSS_SELECTOR, selector)
+            if buttons:
+                button = buttons[0]
+                break
+        
+        # Если не нашли по классу, ищем по тексту кнопки
+        if not button:
+            buttons = self.driver.find_elements(By.XPATH, "//button[contains(text(), 'Загрузить файл')] | //input[@type='button' and contains(@value, 'Загрузить файл')]")
+            if buttons:
+                button = buttons[0]
+        
+        if not button:
+            # Если кнопка не найдена, пропускаем загрузку
+            return
+        
+        button.click()
+
+        modal = WebDriverWait(self.driver, timeout).until(
+            lambda driver: driver.find_elements(By.CSS_SELECTOR, ".media-modal")[-1]
+        )
+        file_input = WebDriverWait(self.driver, timeout).until(
+            lambda driver: modal.find_element(By.CSS_SELECTOR, "input[type='file']")
+        )
+        file_input.send_keys(os.path.abspath(path))
+
+        select_button = WebDriverWait(self.driver, timeout).until(
+            lambda driver: modal.find_element(By.CSS_SELECTOR, ".media-button-select")
+        )
+        WebDriverWait(self.driver, timeout).until(lambda driver: select_button.is_enabled())
+        select_button.click()
+
+        # Ждём заполнения #pdf_id на форме термина (если такое поле есть)
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: driver.find_element(By.ID, "pdf_id").get_attribute("value")
+            )
+        except:
+            # Если поле #pdf_id не найдено, возможно используется другой ID
+            pass
