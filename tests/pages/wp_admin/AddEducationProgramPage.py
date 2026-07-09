@@ -132,25 +132,24 @@ class AddEducationProgramPage(AdminPage):
         # его развёрнутым через CSS (display: block), поэтому кликать по
         # summary не нужно — оба textarea сразу доступны и уже в режиме "Код".
         for profile_name, (edu_program_text, competencies_text) in profile_details.items():
-            print(f"//details[contains(@class, 'profile-accordion')][summary[{self.text_predicate(profile_name)}]]")
             block = self.driver.find_element(
                 By.XPATH,
                 f"//details[contains(@class, 'profile-accordion')][summary[{self.text_predicate(profile_name)}]]",
             )
 
             summary = block.find_element(By.TAG_NAME, "summary")
-            summary.click()
+            # Скроллим summary к центру viewport, чтобы избежать перехвата клика
+            # фиксированной панелью #wpadminbar
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+                summary
+            )
+            # Используем JavaScript для клика, чтобы избежать ElementClickInterceptedException
+            self.driver.execute_script("arguments[0].click();", summary)
 
-            # WebDriverWait(block, timeout).until(EC.staleness_of(button))
-            # WebDriverWait(block, timeout).until(EC.staleness_of(button))
             edu_program_field, competencies_field = block.find_elements(By.TAG_NAME, "iframe")
-            print(edu_program_field.get_attribute('id'))
-            index_page = IndexPage(self.driver)
-            index_page._scroll_to(f"#{edu_program_field.get_attribute('id')}")
             TinymceField(self.driver, edu_program_field.get_attribute('id'), edu_program_text).handle()
             TinymceField(self.driver, competencies_field.get_attribute('id'), competencies_text).handle()
-            # self._fill_textarea(edu_program_field, edu_program_text)
-            # self._fill_textarea(competencies_field, competencies_text)
 
     def _fill_textarea(self, field, text: str):
         # Тот же баг сайта, что и с "Консультациями" (сторонний скрипт
