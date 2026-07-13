@@ -102,14 +102,14 @@ class EducationProgramArchivePage(UserPage):
     def select_filter_education_level(self, level: str):
         """Выбирает уровень образования через обычный select"""
         from selenium.webdriver.support.select import Select
-        
+
         possible_names = [
             "extra[education-level]",
             "extra[level]",
             "extra[edu-level]",
             "extra[qualification]",
         ]
-        
+
         for name in possible_names:
             elements = self.driver.find_elements(By.NAME, name)
             if elements:
@@ -121,29 +121,16 @@ class EducationProgramArchivePage(UserPage):
         division_select = self.driver.find_element(By.NAME, "extra[division]")
         Select(division_select).select_by_visible_text(division)
 
-    def click_apply_filters(self):
-        form = self.driver.find_element(By.ID, "filter-form")
-
-        submit_buttons = form.find_elements(
-            By.XPATH,
-            ".//button[@type='submit'] | .//button[contains(text(), 'Найти')] | .//button[contains(text(), 'Применить')] | .//button[contains(text(), 'Поиск')] | .//input[@type='submit']"
-        )
-
-        if submit_buttons:
-            button = submit_buttons[0]
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-            self.driver.execute_script("arguments[0].click();", button)
-        else:
-            self.driver.execute_script("arguments[0].submit();", form)
-
-
     def click_reset_filters(self):
         self.open()
 
-    def wait_for_filters_applied(self, timeout: int = 10):
+    def wait_for_filters_applied(self, timeout: int = 10, expected_count: int = None):
         import time
-        time.sleep(2)
-        
+
+        # Увеличенная пауза для надёжного начала AJAX-запроса и обновления DOM
+        time.sleep(1.5)
+
+        # Ждём исчезновения лоадера (если есть)
         loaders = self.driver.find_elements(By.CSS_SELECTOR, ".loader, .spinner, .loading, .preloader")
         if loaders:
             WebDriverWait(self.driver, timeout).until(
@@ -151,6 +138,41 @@ class EducationProgramArchivePage(UserPage):
                     (By.CSS_SELECTOR, ".loader, .spinner, .loading, .preloader")
                 )
             )
+            # После исчезновения лоадера даём DOM время полностью обновиться
+            time.sleep(0.5)
+
+        # Если указано ожидаемое количество - ждём его появления
+        if expected_count is not None:
+            start_time = time.time()
+            stable_count_iterations = 0
+
+            while time.time() - start_time < timeout:
+                current_programs = self.driver.find_elements(
+                    By.CSS_SELECTOR,
+                    ".edu-program, .edu-program__item, .education-program-card, .program-item, article.education-program"
+                )
+                current_count = len(current_programs)
+
+                if current_count == expected_count:
+                    # Нашли нужное количество - проверяем стабильность
+                    stable_count_iterations += 1
+
+                    if stable_count_iterations >= 2:
+                        # Количество стабильно уже 2 итерации подряд - выходим
+                        return
+
+                    # Ждём ещё одну итерацию для подтверждения
+                    time.sleep(0.5)
+                else:
+                    # Количество не совпадает - сбрасываем счётчик стабильности
+                    stable_count_iterations = 0
+                    time.sleep(0.3)
+
+            # Таймаут истёк - делаем финальную паузу
+            time.sleep(1)
+        else:
+            # Без ожидаемого количества - просто ждём стабилизации DOM
+            time.sleep(2.5)
 
     def assert_program_exists(self, title: str, timeout: int = 10):
         self.assert_visible_text(
