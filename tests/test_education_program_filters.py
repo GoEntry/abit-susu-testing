@@ -6,6 +6,7 @@ def test_education_program_once_filters(driver):
     page = EducationProgramArchivePage(driver)
     page.open()
     page.assert_has_programs()
+    time.sleep(2)
 
     initial_count = page.get_program_count()
     assert initial_count == 10
@@ -25,6 +26,7 @@ def test_education_program_once_filters(driver):
 
 
     # 2 Вступительные испытания
+    page.open()
     page.select_filter_exam_subjects([
         "Русский язык",
         "Математика (профильная)",
