@@ -6,7 +6,7 @@ from pages.base.user.page import UserPage
 
 class EducationProgramArchivePage(UserPage):
     def open(self):
-        super().open("/education-program/")
+        super().open("/education-program/?extra_fields_nonce=53e1ae336d&type-page=archive")
 
     def assert_has_programs(self, timeout: int = 10):
         """Проверяет, что на странице есть хотя бы одна образовательная программа"""
@@ -89,18 +89,16 @@ class EducationProgramArchivePage(UserPage):
         """Выбирает вступительные испытания через select2 (множественный выбор)"""
         from components.fields.select2 import Select2Field
 
-        Select2Field(self.driver, "extra[subjects-ege][]", subjects).handle()
+        Select2Field(self.driver, "extra[subjects-ege][]", subjects).handle(True)
 
 
     def select_filter_form(self, form: str):
-        """Выбирает форму обучения через обычный select"""
         from selenium.webdriver.support.select import Select
 
         form_select = self.driver.find_element(By.NAME, "extra[edu-form]")
         Select(form_select).select_by_visible_text(form)
 
     def select_filter_education_level(self, level: str):
-        """Выбирает уровень образования через обычный select"""
         from selenium.webdriver.support.select import Select
 
         possible_names = [

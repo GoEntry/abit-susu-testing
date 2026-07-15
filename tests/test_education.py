@@ -7,19 +7,11 @@ from pages.wp_admin.AddEducationProgramPage import AddEducationProgramPage
 from pages.wp_admin.TermPage import TermPage
 
 EDU_AREA_NAME = "09.03.01 Информатика и вычислительная техника"
-
-# Форма добавления термина показывает поле картинки (стандартный медиа-
-# загрузчик WordPress) только у этих таксономий — у остальных (Направление,
-# Стоимость, Профили, Вступительные испытания) такого поля нет вовсе.
 TAXONOMIES_WITH_IMAGE = {"partners", "professions", "contacts"}
-# У таксономии subjects_spo есть поле загрузки PDF-файла
 TAXONOMIES_WITH_PDF = {"subjects_spo"}
 LOGO_IMAGE_PATH = str(Path(__file__).parent / "fixtures" / "logo.png")
 SPO_PDF_PATH = str(Path(__file__).parent / "fixtures" / "spo_template.pdf")
 
-# Термины стоимости обучения должны быть просто числом (без пробелов и "₽") —
-# фронтенд сам форматирует их с разделителями разрядов и знаком валюты;
-# текст вида "220 000 ₽/год" тема обрезает по первому пробелу.
 TAXONOMY_TERMS = {
     "edu-areas": [
         # Бакалавриат (09.03.01, 09.03.02, 38.03.01, 15.03.04, 08.03.01, 40.03.01)

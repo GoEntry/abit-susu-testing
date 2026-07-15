@@ -4,17 +4,21 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from components.fields.base.field import Field
+import time
+
 
 @dataclass
 class Select2Field(Field):
     name: str
     values: Union[str, list]
 
-    def handle(self):
+    def handle(self, wait_after_select = False):
         for text in self._as_list(self.values):
             self._widget().click()
             self._option(text).click()
             self._wait_dropdown_closed()
+            if wait_after_select:
+                time.sleep(1)
 
     def _as_list(self, values) -> list:
         return values if isinstance(values, list) else [values]

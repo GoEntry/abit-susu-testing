@@ -281,3 +281,90 @@ def test_edit_multiple_fields(driver):
     edit_page.update_paid_places(original_paid)
     edit_page.update_passing_score_budget(original_budget_score)
     edit_page.publish()
+
+
+def test_edit_form_education_program(driver):
+    """Полный тест редактирования программы с проверкой через фильтры"""
+    import time
+
+    # Логин в wp-admin
+    login_page = WpLoginPage(driver)
+    login_page.open()
+    login_page.login(Config.wp_admin_login(), Config.wp_admin_password())
+
+    # Программа "Юриспруденция" — единственная с формой "очно-заочная" и подразделением "Юридический институт"
+    program_title_admin = "Юриспруденция"
+    program_code = "40.03.01"  # Код направления для поиска на фронтенде
+    division = "Юридический институт"
+    original_form = "очная"
+    new_form = "очно-заочная"
+
+    # 1. Проверяем, что программа находится по исходной комбинации фильтров "очно-заочная" + "Юридический институт"
+    archive_page = EducationProgramArchivePage(driver)
+    archive_page.open()
+    archive_page.assert_has_programs()
+
+    archive_page.select_filter_form(original_form)
+    archive_page.select_filter_division(division)
+    archive_page.wait_for_filters_applied()
+
+    titles = archive_page.get_program_titles()
+    assert any(program_code in title for title in titles), \
+        f"Программа с кодом '{program_code}' не найдена в списке с фильтрами '{original_form}' + '{division}'"
+
+    # 2. Меняем ТОЛЬКО форму обучения в админке (подразделение остаётся "Юридический институт")
+    edit_page = EditEducationProgramPage(driver)
+    edit_page.open_by_title(program_title_admin)
+    edit_page.update_edu_form(new_form)
+    edit_page.publish()
+
+    success_message = edit_page.get_success_message()
+    assert "обновлен" in success_message.lower() or "updated" in success_message.lower(), \
+        f"Не получено сообщение об успешном обновлении. Получено: '{success_message}'"
+
+    # Пауза для синхронизации кеша фронтенда
+    time.sleep(3)
+
+    # 3. Проверяем, что программа НЕ находится по старой комбинации фильтров "очно-заочная" + "Юридический институт"
+    archive_page.open()
+    archive_page.select_filter_form(original_form)
+    archive_page.select_filter_division(division)
+    archive_page.wait_for_filters_applied()
+
+    titles = archive_page.get_program_titles()
+    assert not any(program_code in title for title in titles), \
+        f"Программа с кодом '{program_code}' всё ещё найдена в списке с фильтрами '{original_form}' + '{division}' после изменения"
+
+    # 4. Проверяем, что программа находится по новой комбинации фильтров "очная" + "Юридический институт"
+    archive_page.click_reset_filters()
+    archive_page.wait_for_filters_applied()
+
+    archive_page.select_filter_form(new_form)
+    archive_page.select_filter_division(division)
+    archive_page.wait_for_filters_applied()
+
+    titles = archive_page.get_program_titles()
+    assert any(program_code in title for title in titles), \
+        f"Программа с кодом '{program_code}' не найдена в списке с фильтрами '{new_form}' + '{division}' после изменения"
+
+    # 5. Возвращаем форму обратно на "очно-заочная"
+    edit_page.open_by_title(program_title_admin)
+    edit_page.update_edu_form(original_form)
+    edit_page.publish()
+
+    success_message = edit_page.get_success_message()
+    assert "обновлен" in success_message.lower() or "updated" in success_message.lower(), \
+        f"Не получено сообщение об успешном обновлении при возврате. Получено: '{success_message}'"
+
+    # Пауза для синхронизации кеша фронтенда
+    time.sleep(3)
+
+    # 6. Проверяем, что программа снова находится по исходной комбинации фильтров "очно-заочная" + "Юридический институт"
+    archive_page.open()
+    archive_page.select_filter_form(original_form)
+    archive_page.select_filter_division(division)
+    archive_page.wait_for_filters_applied()
+
+    titles = archive_page.get_program_titles()
+    assert any(program_code in title for title in titles), \
+        f"Программа с кодом '{program_code}' не найдена в списке с фильтрами '{original_form}' + '{division}' после возврата"

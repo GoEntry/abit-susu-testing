@@ -23,16 +23,20 @@ def test_education_program_once_filters(driver):
 
     page.click_reset_filters()
     page.wait_for_filters_applied(expected_count=10)
+    time.sleep(3)
 
 
     # 2 Вступительные испытания
     page.open()
+    page.assert_has_programs()
+    page.open()
+    page.assert_has_programs()
+    # time.sleep(10)
     page.select_filter_exam_subjects([
-        "Русский язык",
+        "Информатика и ИКТ",
         "Математика (профильная)",
-        "Информатика и ИКТ"
+        "Русский язык"
     ])
-    time.sleep(1)
     exam_filtered_count = page.get_program_count()
     page.wait_for_filters_applied(expected_count=2)
     assert exam_filtered_count == 2, f"Ожидалось 2 программы, получено {exam_filtered_count}"
