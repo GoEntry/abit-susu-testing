@@ -296,8 +296,8 @@ def test_edit_form_education_program(driver):
     program_title_admin = "Юриспруденция"
     program_code = "40.03.01"  # Код направления для поиска на фронтенде
     division = "Юридический институт"
-    original_form = "очная"
-    new_form = "очно-заочная"
+    original_form = "очно-заочная"
+    new_form = "очная"
 
     # 1. Проверяем, что программа находится по исходной комбинации фильтров "очно-заочная" + "Юридический институт"
     archive_page = EducationProgramArchivePage(driver)
