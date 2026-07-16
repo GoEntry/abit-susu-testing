@@ -2,6 +2,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pages.base.user.page import UserPage
+from selenium.webdriver.support.select import Select
+from components.fields.select2 import Select2Field
+import time
 
 
 class EducationProgramArchivePage(UserPage):
@@ -75,8 +78,6 @@ class EducationProgramArchivePage(UserPage):
 
         direction_input.clear()
         direction_input.send_keys(direction)
-
-        import time
         time.sleep(0.5)
 
         self.driver.execute_script("""
@@ -84,22 +85,24 @@ class EducationProgramArchivePage(UserPage):
             element.dispatchEvent(new Event('change', { bubbles: true }));
             element.dispatchEvent(new Event('blur', { bubbles: true }));
         """, direction_input)
+        time.sleep(1)
 
     def select_filter_exam_subjects(self, subjects: list):
         """Выбирает вступительные испытания через select2 (множественный выбор)"""
-        from components.fields.select2 import Select2Field
 
         Select2Field(self.driver, "extra[subjects-ege][]", subjects).handle(True)
 
+        time.sleep(1)
+
 
     def select_filter_form(self, form: str):
-        from selenium.webdriver.support.select import Select
 
         form_select = self.driver.find_element(By.NAME, "extra[edu-form]")
         Select(form_select).select_by_visible_text(form)
 
+        time.sleep(1)
+
     def select_filter_education_level(self, level: str):
-        from selenium.webdriver.support.select import Select
 
         possible_names = [
             "extra[education-level]",
@@ -112,18 +115,19 @@ class EducationProgramArchivePage(UserPage):
             elements = self.driver.find_elements(By.NAME, name)
             if elements:
                 Select(elements[0]).select_by_visible_text(level)
+                time.sleep(1)
                 return
 
     def select_filter_division(self, division: str):
-        from selenium.webdriver.support.select import Select
         division_select = self.driver.find_element(By.NAME, "extra[division]")
         Select(division_select).select_by_visible_text(division)
+
+        time.sleep(1)
 
     def click_reset_filters(self):
         self.open()
 
     def wait_for_filters_applied(self, timeout: int = 10, expected_count: int = None):
-        import time
 
         # Увеличенная пауза для надёжного начала AJAX-запроса и обновления DOM
         time.sleep(1.5)
