@@ -751,6 +751,7 @@ def test_reset_db(driver):
     reset_db_page.open()
     reset_db_page.assert_reset_db_button_visible()
     reset_db_page.click_reset_db()
+    reset_db_page.assert_success_message_visible()
 
     education_program_list_page = EducationProgramListPage(driver)
     education_program_list_page.open()
@@ -766,6 +767,7 @@ def test_fill_education_programs(driver):
     reset_db_page.open()
     reset_db_page.assert_reset_db_button_visible()
     reset_db_page.click_reset_db()
+    reset_db_page.assert_success_message_visible()
 
     term_page = TermPage(driver)
     for taxonomy, terms in TAXONOMY_TERMS.items():
