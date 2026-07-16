@@ -115,7 +115,6 @@ def test_edit_program_duration(driver):
     if duration_text and new_duration not in duration_text:
         print(f"Предупреждение: Новый срок обучения '{new_duration}' не найден на фронтенде. Найдено: '{duration_text}'")
 
-
     # Возвращаем исходное значение
     edit_page.open_by_title(program_title)
     edit_page.update_duration(original_duration)
