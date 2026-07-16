@@ -4,6 +4,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.driver_cache import DriverCacheManager
 import pytest
 from classes.config import Config
+from pathlib import Path
+from datetime import datetime
 
 @pytest.fixture
 def driver():
@@ -30,3 +32,21 @@ def driver():
     yield driver
 
     driver.quit()
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when == "call" and report.failed:
+        driver = item.funcargs.get('driver')
+        if driver:
+            screenshots_dir = Path(__file__).parent.parent / "screenshots"
+            screenshots_dir.mkdir(exist_ok=True)
+
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            test_name = item.nodeid.replace("::", "_").replace("/", "_").replace("\\", "_")
+            screenshot_path = screenshots_dir / f"{test_name}_{timestamp}.png"
+
+            driver.save_screenshot(str(screenshot_path))
+            print(f"\nСкриншот сохранён: {screenshot_path}")
